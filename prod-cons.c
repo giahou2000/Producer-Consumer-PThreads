@@ -1,5 +1,5 @@
 /*
-  A simple producer-consumer task, to get into parallel programming
+ * A simple producer-consumer task, to get into parallel programming
 */
 
 // Include the necessary libraries
@@ -12,20 +12,24 @@
 #define QUEUESIZE 10
 #define LOOP 50000
 
+// The producer and the consumer
 void *producer (void *args);
 void *consumer (void *args);
 
-// my addings
+// This struct exists because that's the only way to get a whole function through pthreads
 typedef struct workFunction{
   void * (*work)(void *);
   void * arg;
   clock_t start;
 } workFunction;
 
+// This is what the thread will produce after the consumption
 void* whatIHaveToDo(){
 	printf("Hi, this is a message from me, an ordinary thread! \n");
 }
 
+// The queue is necessary for the producer-consumer program
+// The producer stores "products" in the queue and the consumer drags the "products" to consume them
 typedef struct {
   workFunction buf[QUEUESIZE];
   long head, tail;
@@ -34,64 +38,91 @@ typedef struct {
   pthread_cond_t *notFull, *notEmpty;
 } queue;
 
+// Functions of the queue data structure
+// Queue initialization
 queue *queueInit (void);
+// Queue deletion
 void queueDelete (queue *q);
+// Add "product" to queue
 void queueAdd (queue *q, workFunction in);
+// Subtract/delete "product" from queue
 void queueDel (queue *q, workFunction *out);
 
 
 
-
-
-
 /*
- ***### The main function ###***
+ ***### The main function. Here the program begins to run. ###***
 */
 int main (){
-  clock_t starting = clock();
-  queue *fifo;
-  int p = 4;
-  int q = 10;
-  pthread_t pro[p], con[q];
-  //FILE *fptr;
-  
-  //change the path to a suitable one!!!!!!!!!!!!!!!!!!!
-  //fptr = fopen("C:\\Users\\Christos\\chris\\auth\\Parallel and distributed systems\\pds-codebase\\prod_con_times.dat", "w");
-
-  fifo = queueInit ();
-  if (fifo == NULL) {
-    fprintf(stderr, "main: Queue Init failed.\n");
-    exit(1);
-  }
-  for(int i = 0 ; i < p ; i++){
-	  pthread_create (&pro[i], NULL, producer, (void*)fifo);
-  }
-  for(int i = 0 ; i < q ; i++){
-	  pthread_create (&con[i], NULL, consumer, (void*)fifo);
-  }
-  //wait until all threads finish
-  for(int t = 0 ; t < p ; t++) {
-       pthread_join(pro[t], NULL);
+	
+	// Get time measurements for observation and statistics
+	clock_t starting = clock();
+	
+	// Creation of a FIFO(First in - First out) queue
+	queue *fifo;
+	
+	// Declare the number of producers(p) and consumers(q)
+	int p = 4;
+	int q = 10;
+	
+	// Declare the producers and the consumers
+	pthread_t pro[p], con[q];
+	
+	// If you want to save the results to a file uncomment the followings
+	//FILE *fptr;
+	//change the path to a suitable one!!!!!!!!!!!!!!!!!!!
+	//fptr = fopen("C:\\Users\\...\\prod_con_times.dat", "w");
+	
+	// Initialize the queue
+	fifo = queueInit ();
+	if (fifo == NULL) {
+		fprintf(stderr, "main: Queue Init failed.\n");
+		exit(1);
 	}
-  for(int t = 0 ; t < q ; t++) {
-	   pthread_join(con[t], NULL);
+	
+	/*
+	* Here the producers and the consumers start to work
+	*/
+	// Create the producers' threads
+	for(int i = 0 ; i < p ; i++){
+		pthread_create (&pro[i], NULL, producer, (void*)fifo);
 	}
-  queueDelete(fifo);
-  //fclose(fptr);
-  clock_t ending = clock();
-  double cpu_time_used;
-  cpu_time_used = ((double) (ending - (starting))) / CLOCKS_PER_SEC;
-  printf("The program's time was %f \n", cpu_time_used);
-  return 0;
+	// Create the consumers' threads
+	for(int i = 0 ; i < q ; i++){
+		pthread_create (&con[i], NULL, consumer, (void*)fifo);
+	}
+	
+	// Wait until all producers finish their work
+	for(int t = 0 ; t < p ; t++) {
+		pthread_join(pro[t], NULL);
+	}
+	
+	// Wait until all consumers finish their work
+	for(int t = 0 ; t < q ; t++) {
+		pthread_join(con[t], NULL);
+	}
+	
+	// Destroy the queue so that it doesn't use memory without reason
+	queueDelete(fifo);
+	
+	// If you want to save the results to a file uncomment the following
+	//fclose(fptr);
+	
+	// Stop the stopwatch
+	clock_t ending = clock();
+	
+	// Convert to an understandable format
+	double cpu_time_used;
+	cpu_time_used = ((double) (ending - (starting))) / CLOCKS_PER_SEC;
+	printf("The program's time was %f \n", cpu_time_used);
+	return 0;
 }
 
 
 
-
-
-
-
-
+/*
+* Building the producer's structure
+*/
 void *producer (void *q)
 {
   queue *fifo;
@@ -114,6 +145,9 @@ void *producer (void *q)
   return (NULL);
 }
 
+/*
+* Building the consumer's structure
+*/
 void *consumer (void *q)
 {
   queue *fifo;

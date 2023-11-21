@@ -2,7 +2,7 @@
 * FILE: dotprod_serial.c
 * DESCRIPTION:
 *   This is a simple serial program which computes the dot product of two 
-*   vectors.  The threaded version can is dotprod_mutex.c.
+*   vectors.
 * SOURCE: Vijay Sonnad, IBM
 * LAST REVISED: 01/29/09 Blaise Barney
 ******************************************************************************/
@@ -70,7 +70,7 @@ Finally, it prints the result.
 
 int main (int argc, char *argv[])
 {
-int i,len;
+int i, len;
 double *a, *b;
    
 /* Assign storage and initialize values */

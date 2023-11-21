@@ -45,7 +45,7 @@ of type DOTDATA and all output from this function is written into
 this structure. The benefit of this approach is apparent for the 
 multi-threaded program: when a thread is created we pass a single
 argument to the activated function - typically this argument
-is a thread number. All  the other information required by the 
+is a thread number. All the other information required by the 
 function is accessed from the globally accessible structure. 
 */
 

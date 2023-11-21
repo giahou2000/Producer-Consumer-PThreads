@@ -1,77 +1,105 @@
 /******************************************************************************
-* FILE: arrayloops.c
+* FILE: bug1.c
 * DESCRIPTION:
-*   Example code demonstrating decomposition of array processing by
-*   distributing loop iterations.  A global sum is maintained by a mutex
-*   variable.  
-* AUTHOR: Blaise Barney
-* LAST REVISED: 01/29/09
+*   This example has a bug. It is a variation on the condvar.c example. 
+*   Instead of just one thread waiting for the condition signal, there are
+*   four threads waiting for the same signal. Find out how to fix the
+*   program. The solution program is bug1fix.c.
+* SOURCE: Adapted from example code in "Pthreads Programming", B. Nichols
+*   et al. O'Reilly and Associates.
+* LAST REVISED: 07/06/05  Blaise Barney
 ******************************************************************************/
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#define NTHREADS      4
-#define ARRAYSIZE   1000000
-#define ITERATIONS   ARRAYSIZE / NTHREADS
+#define NUM_THREADS  6
+#define TCOUNT 10
+#define COUNT_LIMIT 12
 
-double  sum=0.0, a[ARRAYSIZE];
-pthread_mutex_t sum_mutex;
+int     count = 0;
+pthread_mutex_t count_mutex;
+pthread_cond_t count_threshold_cv;
 
-
-void *do_work(void *tid) 
+void *inc_count(void *idp) 
 {
-  int i, start, *mytid, end;
-  double mysum=0.0;
+  int j,i;
+  double result=0.0;
+  long my_id = (long)idp;
+  for (i=0; i < TCOUNT; i++) {
+    pthread_mutex_lock(&count_mutex);
+    count++;
 
-  /* Initialize my part of the global array and keep local sum */
-  mytid = (int *) tid;
-  start = (*mytid * ITERATIONS);
-  end = start + ITERATIONS;
-  printf ("Thread %d doing iterations %d to %d\n",*mytid,start,end-1); 
-  for (i=start; i < end ; i++) {
-    a[i] = i * 1.0;
-    mysum = mysum + a[i];
+    /* 
+    Check the value of count and signal waiting thread when condition is
+    reached.  Note that this occurs while mutex is locked. 
+    */
+    if (count == COUNT_LIMIT) {
+      pthread_cond_signal(&count_threshold_cv);
+      printf("inc_count(): thread %ld, count = %d  Threshold reached.\n", my_id, count);
+      }
+    printf("inc_count(): thread %ld, count = %d, unlocking mutex\n", my_id, count);
+    pthread_mutex_unlock(&count_mutex);
+
+    /* Do some work so threads can alternate on mutex lock */
+    sleep(1);
     }
-
-  /* Lock the mutex and update the global sum, then exit */
-  pthread_mutex_lock (&sum_mutex);
-  sum = sum + mysum;
-  pthread_mutex_unlock (&sum_mutex);
   pthread_exit(NULL);
 }
 
+void *watch_count(void *idp) 
+{
+  long my_id = (long)idp;
+
+  printf("Starting watch_count(): thread %ld\n", my_id);
+
+  /*
+  Lock mutex and wait for signal.  Note that the pthread_cond_wait routine
+  will automatically and atomically unlock mutex while it waits. 
+  Also, note that if COUNT_LIMIT is reached before this routine is run by
+  the waiting thread, the loop will be skipped to prevent pthread_cond_wait
+  from never returning.
+  */
+  pthread_mutex_lock(&count_mutex);
+    printf("***Before cond_wait: thread %ld\n", my_id);
+    pthread_cond_wait(&count_threshold_cv, &count_mutex);
+    printf("***Thread %ld Condition signal received.\n", my_id);
+  pthread_mutex_unlock(&count_mutex);
+  pthread_exit(NULL);
+}
 
 int main(int argc, char *argv[])
 {
-  int i, start, tids[NTHREADS];
-  pthread_t threads[NTHREADS];
+  int i, rc;
+  pthread_t threads[6];
   pthread_attr_t attr;
 
-  /* Pthreads setup: initialize mutex and explicitly create threads in a
-     joinable state (for portability).  Pass each thread its loop offset */
-  pthread_mutex_init(&sum_mutex, NULL);
+  /* Initialize mutex and condition variable objects */
+  pthread_mutex_init(&count_mutex, NULL);
+  pthread_cond_init (&count_threshold_cv, NULL);
+
+  /*
+  For portability, explicitly create threads in a joinable state 
+  */
   pthread_attr_init(&attr);
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-  for (i=0; i<NTHREADS; i++) {
-    tids[i] = i;
-    pthread_create(&threads[i], &attr, do_work, (void *) &tids[i]);
-    }
+  pthread_create(&threads[2], &attr, watch_count, (void *)2);
+  pthread_create(&threads[3], &attr, watch_count, (void *)3);
+  pthread_create(&threads[4], &attr, watch_count, (void *)4);
+  pthread_create(&threads[5], &attr, watch_count, (void *)5);
+  pthread_create(&threads[0], &attr, inc_count, (void *)0);
+  pthread_create(&threads[1], &attr, inc_count, (void *)1);
 
-  /* Wait for all threads to complete then print global sum */ 
-  for (i=0; i<NTHREADS; i++) {
+  /* Wait for all threads to complete */
+  for (i = 0; i < NUM_THREADS; i++) {
     pthread_join(threads[i], NULL);
   }
-  printf ("Done. Sum= %e \n", sum);
-
-  sum=0.0;
-  for (i=0;i<ARRAYSIZE;i++){ 
-  a[i] = i*1.0;
-  sum = sum + a[i]; }
-  printf("Check Sum= %e\n",sum);
+  printf ("Main(): Waited on %d  threads. Done.\n", NUM_THREADS);
 
   /* Clean up and exit */
   pthread_attr_destroy(&attr);
-  pthread_mutex_destroy(&sum_mutex);
+  pthread_mutex_destroy(&count_mutex);
+  pthread_cond_destroy(&count_threshold_cv);
   pthread_exit (NULL);
+
 }

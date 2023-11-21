@@ -15,6 +15,7 @@
 /* Define global data where everyone can see them */
 #define NUMTHRDS 8
 #define VECLEN 100000
+pthread_mutex_t sum_mutex;
 int *a, *b; 
 long sum=0;
 
@@ -33,9 +34,14 @@ void *dotprod(void *arg)
 
 /* Perform my section of the dot product */
    printf("thread: %ld starting. start=%d end=%d\n",tid,start,end-1);
-   for (i=start; i<end ; i++) 
-      sum += (a[i] * b[i]);
+   for (i=start; i<end ; i++){
+        pthread_mutex_lock(&sum_mutex);
+        sum += (a[i] * b[i]);
+        
+   }
+      
    printf("thread: %ld done. Global sum now is=%li\n",tid,sum);
+   pthread_mutex_unlock(&sum_mutex);
 
    pthread_exit((void*) 0);
 }
@@ -48,6 +54,7 @@ long i;
 void *status;
 pthread_t threads[NUMTHRDS];
 pthread_attr_t attr;
+pthread_mutex_init(&sum_mutex, NULL);
 
 /* Assign storage and initialize values */
 a = (int*) malloc (NUMTHRDS*VECLEN*sizeof(int));
@@ -76,4 +83,5 @@ printf ("Final Global Sum=%li\n",sum);
 free (a);
 free (b);
 pthread_exit(NULL);
+pthread_mutex_destroy(&sum_mutex);
 }   

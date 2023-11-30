@@ -12,19 +12,21 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+
 
 #define NUM_THREADS  6
 #define TCOUNT 10
 #define COUNT_LIMIT 12
 
-int     count = 0;
+int count = 0;
 pthread_mutex_t count_mutex;
 pthread_cond_t count_threshold_cv;
 
 void *inc_count(void *idp) 
 {
-  int j,i;
-  double result=0.0;
+  int j, i;
+  double result = 0.0;
   long my_id = (long)idp;
   for (i=0; i < TCOUNT; i++) {
     pthread_mutex_lock(&count_mutex);
@@ -61,9 +63,9 @@ void *watch_count(void *idp)
   from never returning.
   */
   pthread_mutex_lock(&count_mutex);
-    printf("***Before cond_wait: thread %ld\n", my_id);
-    pthread_cond_wait(&count_threshold_cv, &count_mutex);
-    printf("***Thread %ld Condition signal received.\n", my_id);
+  printf("***Before cond_wait: thread %ld\n", my_id);
+  pthread_cond_wait(&count_threshold_cv, &count_mutex);
+  printf("***Thread %ld Condition signal received.\n", my_id);
   pthread_mutex_unlock(&count_mutex);
   pthread_exit(NULL);
 }

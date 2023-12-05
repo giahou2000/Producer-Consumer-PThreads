@@ -12,13 +12,13 @@
 #define QUEUESIZE 10
 #define LOOP 50000
 
-// The producer and the consumer
+// The producer and the consumer declaration
 void *producer (void *args);
 void *consumer (void *args);
 
-// This struct exists because that's the only way to get a ορε τη;ν ονε ;ργθέντσ through pthreads
+// This struct exists because that's the only way to get more than one arguments through pthreads
 typedef struct workFunction{
-  void * (*work)(void *);
+  void * (*work)(void *); // Work will become later the 'whatIHaveToDo()' function
   void * arg;
   clock_t start;
 } workFunction;
@@ -39,20 +39,22 @@ typedef struct {
   pthread_cond_t *notFull, *notEmpty;
 } queue;
 
-// Functions of the queue data structure
+// Declaration of the functions of the queue data structure
 // Queue initialization
 queue *queueInit (void);
-// Queue deletion
+// Queue destruction
 void queueDelete (queue *q);
 // Add "product" to queue
 void queueAdd (queue *q, workFunction in);
-// Subtract/delete "product" from queue
+// Extract and consume "product" from queue
 void queueDel (queue *q, workFunction *out);
 
 
 
 /*
- ***### The main function. Here the program begins to run. ###***
+*********************************
+|***### The main function ###***|
+*********************************
 */
 int main (){
 	
@@ -124,6 +126,7 @@ int main (){
 /*
 * Building the producer's structure
 */
+// make sure this is right!!!!!!!!!!!!!!!!!!
 void *producer (void *q)
 {
   queue *fifo;
@@ -149,6 +152,7 @@ void *producer (void *q)
 /*
 * Building the consumer's structure
 */
+// make sure this is right!!!!!!!!!!!!!!!!!!
 void *consumer (void *q)
 {
   queue *fifo;
@@ -170,16 +174,6 @@ void *consumer (void *q)
   return (NULL);
 }
 
-/*
-  typedef struct {
-  int buf[QUEUESIZE];
-  long head, tail;
-  int full, empty;
-  pthread_mutex_t *mut;
-  pthread_cond_t *notFull, *notEmpty;
-  } queue;
-*/
-
 queue *queueInit (void)
 {
   queue *q;
@@ -187,10 +181,10 @@ queue *queueInit (void)
   q = (queue *)malloc (sizeof (queue));
   if (q == NULL) return (NULL);
 
-  q->empty = 1;
-  q->full = 0;
-  q->head = 0;
-  q->tail = 0;
+  q->empty = 1; // 1 == yes
+  q->full = 0; // 0 == no
+  q->head = 0; // head and tail are the same when a queue is empty
+  q->tail = 0; // head and tail are the same when a queue is empty
   q->mut = (pthread_mutex_t *) malloc (sizeof (pthread_mutex_t));
   pthread_mutex_init (q->mut, NULL);
   q->notFull = (pthread_cond_t *) malloc (sizeof (pthread_cond_t));
@@ -212,6 +206,7 @@ void queueDelete (queue *q)
   free (q);
 }
 
+// make sure this is right!!!!!!!!!!!!!!!!!!
 void queueAdd (queue *q, workFunction in)
 {
   q->buf[q->tail] = in;
@@ -226,6 +221,7 @@ void queueAdd (queue *q, workFunction in)
   return;
 }
 
+// make sure this is right!!!!!!!!!!!!!!!!!!!
 void queueDel (queue *q, workFunction *out)
 {
   *out = q->buf[q->head];

@@ -16,20 +16,21 @@
 void *producer (void *args);
 void *consumer (void *args);
 
-// This struct exists because that's the only way to get a whole function through pthreads
+// This struct exists because that's the only way to get a ορε τη;ν ονε ;ργθέντσ through pthreads
 typedef struct workFunction{
   void * (*work)(void *);
   void * arg;
   clock_t start;
 } workFunction;
 
-// This is what the thread will produce after the consumption
+// This is what the thread will produce after the "consumption"
 void* whatIHaveToDo(){
 	printf("Hi, this is a message from me, an ordinary thread! \n");
 }
 
 // The queue is necessary for the producer-consumer program
-// The producer stores "products" in the queue and the consumer drags the "products" to consume them
+// The producer stores "products" in the queue and the consumer extracts the "products" to consume them
+// This is how the queue is structured
 typedef struct {
   workFunction buf[QUEUESIZE];
   long head, tail;
@@ -65,7 +66,7 @@ int main (){
 	int p = 4;
 	int q = 10;
 	
-	// Declare the producers and the consumers
+	// Build the producers and consumers storage
 	pthread_t pro[p], con[q];
 	
 	// If you want to save the results to a file uncomment the followings
@@ -101,6 +102,9 @@ int main (){
 	for(int t = 0 ; t < q ; t++) {
 		pthread_join(con[t], NULL);
 	}
+
+  // Stop the stopwatch
+	clock_t ending = clock();
 	
 	// Destroy the queue so that it doesn't use memory without reason
 	queueDelete(fifo);
@@ -108,10 +112,7 @@ int main (){
 	// If you want to save the results to a file uncomment the following
 	//fclose(fptr);
 	
-	// Stop the stopwatch
-	clock_t ending = clock();
-	
-	// Convert to an understandable format
+	// Convert time measurement to an understandable format
 	double cpu_time_used;
 	cpu_time_used = ((double) (ending - (starting))) / CLOCKS_PER_SEC;
 	printf("The program's time was %f \n", cpu_time_used);
@@ -164,7 +165,7 @@ void *consumer (void *q)
     queueDel (fifo, &d);
     pthread_mutex_unlock (fifo->mut);
     pthread_cond_signal (fifo->notFull);
-    printf ("consumer: recieved %d.\n", d);
+    printf ("consumer: received %d.\n", d);
   }
   return (NULL);
 }

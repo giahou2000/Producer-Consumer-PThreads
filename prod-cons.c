@@ -11,6 +11,7 @@
 
 #define QUEUESIZE 10
 #define LOOP 50000
+#define THREASHOLD 50000
 
 // The producer and the consumer declaration
 void *producer (void *args);
@@ -52,7 +53,7 @@ void queueDel (queue *q, workFunction *out);
 // Each consumer will add an ace to the con_counter each time it consumes a product from the queue
 int con_counter = 0;
 // The mutex for controlling the con_counter
-pthread_mutex_t con_counter_mut;
+pthread_mutex_t *con_counter_mut;
 
 /*
 *********************************
@@ -164,16 +165,25 @@ void *consumer (void *q)
 
   while(1){
     pthread_mutex_lock (fifo->mut);
-    while (fifo->empty) {
+
+    if (con_counter == THREASHOLD){
+      break;
+    }
+    while (fifo->empty && con_counter != THREASHOLD) {
       printf ("consumer: queue EMPTY.\n");
       pthread_cond_wait (fifo->notEmpty, fifo->mut);
+    }
+    if (con_counter == THREASHOLD){
+      break;
     }
     queueDel (fifo, &d);
     pthread_mutex_unlock (fifo->mut);
     pthread_cond_signal (fifo->notFull);
     printf ("consumer: received %d.\n", d);
     pthread_mutex_lock (con_counter_mut);
-    con_counter++;
+    if (con_counter != THREASHOLD){
+      con_counter++;
+    }
     pthread_mutex_unlock (con_counter_mut);
   }
   return (NULL);

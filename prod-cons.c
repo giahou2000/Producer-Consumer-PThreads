@@ -126,7 +126,6 @@ int main (){
 /*
 * Building the producer's structure
 */
-// make sure this is right!!!!!!!!!!!!!!!!!!
 void *producer (void *q)
 {
   queue *fifo;

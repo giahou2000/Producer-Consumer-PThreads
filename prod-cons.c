@@ -49,7 +49,10 @@ void queueAdd (queue *q, workFunction in);
 // Extract and consume "product" from queue
 void queueDel (queue *q, workFunction *out);
 
-
+// Each consumer will add an ace to the con_counter each time it consumes a product from the queue
+int con_counter = 0;
+// The mutex for controlling the con_counter
+pthread_mutex_t con_counter_mut;
 
 /*
 *********************************
@@ -169,6 +172,9 @@ void *consumer (void *q)
     pthread_mutex_unlock (fifo->mut);
     pthread_cond_signal (fifo->notFull);
     printf ("consumer: received %d.\n", d);
+    pthread_mutex_lock (con_counter_mut);
+    con_counter++;
+    pthread_mutex_unlock (con_counter_mut);
   }
   return (NULL);
 }

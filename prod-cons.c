@@ -58,9 +58,6 @@ void queueDel (queue *q, workFunction *out);
 */
 int main (){
 	
-	// Get time measurements for observation and statistics
-	clock_t starting = clock();
-	
 	// Creation of a FIFO(First in - First out) queue
 	queue *fifo;
 	
@@ -83,6 +80,9 @@ int main (){
 		exit(1);
 	}
 	
+  // Get time measurements for observation and statistics
+	clock_t starting = clock();
+
 	/*
 	* Here the producers and the consumers start to work
 	*/

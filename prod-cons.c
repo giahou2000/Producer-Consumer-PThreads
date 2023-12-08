@@ -195,6 +195,7 @@ void *consumer (void *q)
   return (NULL);
 }
 
+// Queue initialization function
 queue *queueInit (void)
 {
   queue *q;
@@ -216,6 +217,7 @@ queue *queueInit (void)
   return (q);
 }
 
+// Function for destroying queue
 void queueDelete (queue *q)
 {
   pthread_mutex_destroy (q->mut);
@@ -227,7 +229,7 @@ void queueDelete (queue *q)
   free (q);
 }
 
-// make sure this is right!!!!!!!!!!!!!!!!!!
+// Function for adding elements in queue
 void queueAdd (queue *q, workFunction in)
 {
   q->buf[q->tail] = in;
@@ -242,7 +244,7 @@ void queueAdd (queue *q, workFunction in)
   return;
 }
 
-// make sure this is right!!!!!!!!!!!!!!!!!!!
+// Queue for extracting elements from queue
 void queueDel (queue *q, workFunction *out)
 {
   *out = q->buf[q->head];

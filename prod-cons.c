@@ -53,7 +53,7 @@ void queueDel (queue *q, workFunction *out);
 // Each consumer will add an ace to the con_counter each time it consumes a product from the queue
 int con_counter = 0;
 // The mutex for controlling the con_counter
-pthread_mutex_t *con_counter_mut;
+pthread_mutex_t con_counter_mut;
 
 /*
 *********************************
@@ -62,6 +62,9 @@ pthread_mutex_t *con_counter_mut;
 */
 int main (){
 	
+  // Initialize the mutex
+  pthread_mutex_init(&con_counter_mut, NULL);
+
 	// Creation of a FIFO(First in - First out) queue
 	queue *fifo;
 	
@@ -114,6 +117,9 @@ int main (){
 	
 	// Destroy the queue so that it doesn't use memory without reason
 	queueDelete(fifo);
+
+  // Destroy the mutex
+  pthread_mutex_destroy(&con_counter_mut);
 	
 	// If you want to save the results to a file uncomment the following
 	//fclose(fptr);
@@ -180,11 +186,11 @@ void *consumer (void *q)
     pthread_mutex_unlock (fifo->mut);
     pthread_cond_signal (fifo->notFull);
     printf ("consumer: received %d.\n", d);
-    pthread_mutex_lock (con_counter_mut);
+    pthread_mutex_lock (&con_counter_mut);
     if (con_counter != THREASHOLD){
       con_counter++;
     }
-    pthread_mutex_unlock (con_counter_mut);
+    pthread_mutex_unlock (&con_counter_mut);
   }
   return (NULL);
 }

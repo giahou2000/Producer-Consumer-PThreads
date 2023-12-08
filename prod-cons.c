@@ -12,6 +12,8 @@
 #define QUEUESIZE 10
 #define LOOP 50000
 #define THREASHOLD 50000
+#define producers 4
+#define consumers 10
 
 // The producer and the consumer declaration
 void *producer (void *args);
@@ -69,8 +71,8 @@ int main (){
 	queue *fifo;
 	
 	// Declare the number of producers(p) and consumers(q)
-	int p = 4;
-	int q = 10;
+	int p = producers;
+	int q = consumers;
 	
 	// Build the producers and consumers storage
 	pthread_t pro[p], con[q];
@@ -110,6 +112,7 @@ int main (){
 	// Wait until all consumers finish their work
 	for(int t = 0 ; t < q ; t++) {
 		pthread_join(con[t], NULL);
+    printf("One thread joined!!! \n");
 	}
 
   // Stop the stopwatch
@@ -173,6 +176,7 @@ void *consumer (void *q)
     pthread_mutex_lock (fifo->mut);
 
     if (con_counter == THREASHOLD){
+      printf ("consumer: THE END.\n");
       break;
     }
     while (fifo->empty && con_counter != THREASHOLD) {
@@ -180,18 +184,20 @@ void *consumer (void *q)
       pthread_cond_wait (fifo->notEmpty, fifo->mut);
     }
     if (con_counter == THREASHOLD){
+      printf ("consumer: The end.\n");
       break;
     }
     queueDel (fifo, &d);
     pthread_mutex_unlock (fifo->mut);
     pthread_cond_signal (fifo->notFull);
-    printf ("consumer: received %d.\n", d);
+    printf ("consumer: received %d.\n", 1);
     pthread_mutex_lock (&con_counter_mut);
     if (con_counter != THREASHOLD){
       con_counter++;
     }
     pthread_mutex_unlock (&con_counter_mut);
   }
+  printf ("consumer: Exiting.\n");
   return (NULL);
 }
 

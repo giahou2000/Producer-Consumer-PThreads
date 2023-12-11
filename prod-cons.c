@@ -15,6 +15,8 @@
 #define producers 4
 #define consumers 10
 
+int con_counter = 0;
+
 // The producer and the consumer declaration
 void *producer (void *args);
 void *consumer (void *args);
@@ -52,20 +54,12 @@ void queueAdd (queue *q, workFunction in);
 // Extract and consume "product" from queue
 void queueDel (queue *q, workFunction *out);
 
-// Each consumer will add an ace to the con_counter each time it consumes a product from the queue
-int con_counter = 0;
-// The mutex for controlling the con_counter
-pthread_mutex_t con_counter_mut;
-
 /*
 *********************************
 |***### The main function ###***|
 *********************************
 */
 int main (){
-	
-  // Initialize the mutex
-  pthread_mutex_init(&con_counter_mut, NULL);
 
 	// Creation of a FIFO(First in - First out) queue
 	queue *fifo;
@@ -120,9 +114,6 @@ int main (){
 	
 	// Destroy the queue so that it doesn't use memory without reason
 	queueDelete(fifo);
-
-  // Destroy the mutex
-  pthread_mutex_destroy(&con_counter_mut);
 	
 	// If you want to save the results to a file uncomment the following
 	//fclose(fptr);
@@ -164,7 +155,6 @@ void *producer (void *q)
 /*
 * Building the consumer's structure
 */
-// make sure this is right!!!!!!!!!!!!!!!!!!
 void *consumer (void *q)
 {
   queue *fifo;
@@ -172,30 +162,23 @@ void *consumer (void *q)
   workFunction d;
   fifo = (queue *)q;
 
-  while(1){
+  while(con_counter < THREASHOLD){
     pthread_mutex_lock (fifo->mut);
 
-    if (con_counter == THREASHOLD){
-      printf ("consumer: THE END.\n");
-      break;
-    }
-    while (fifo->empty && con_counter != THREASHOLD) {
-      printf ("consumer: queue EMPTY.\n");
+    while (fifo->empty) {
       pthread_cond_wait (fifo->notEmpty, fifo->mut);
     }
+
     if (con_counter == THREASHOLD){
       printf ("consumer: The end.\n");
+      pthread_cond_signal (fifo->notEmpty);
       break;
     }
     queueDel (fifo, &d);
-    pthread_mutex_unlock (fifo->mut);
+    con_counter++;
     pthread_cond_signal (fifo->notFull);
-    printf ("consumer: received %d.\n", 1);
-    pthread_mutex_lock (&con_counter_mut);
-    if (con_counter != THREASHOLD){
-      con_counter++;
-    }
-    pthread_mutex_unlock (&con_counter_mut);
+    pthread_mutex_unlock (fifo->mut);
+    // printf ("consumer: received %d.\n", 1);
   }
   printf ("consumer: Exiting.\n");
   return (NULL);

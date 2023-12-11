@@ -101,6 +101,7 @@ int main (){
 	// Wait until all producers finish their work
 	for(int t = 0 ; t < p ; t++) {
 		pthread_join(pro[t], NULL);
+    printf("One producer joined!!! \n");
 	}
 	
 	// Wait until all consumers finish their work
@@ -143,12 +144,13 @@ void *producer (void *q)
       printf ("producer: queue FULL.\n");
       pthread_cond_wait (fifo->notFull, fifo->mut);
     }
-	workFunction wF;
-	wF.work = whatIHaveToDo;
+	  workFunction wF;
+	  wF.work = whatIHaveToDo;
     queueAdd (fifo, wF);
     pthread_mutex_unlock (fifo->mut);
     pthread_cond_signal (fifo->notEmpty);
   }
+  printf("Producer exiting\n");
   return (NULL);
 }
 
@@ -169,11 +171,15 @@ void *consumer (void *q)
       pthread_cond_wait (fifo->notEmpty, fifo->mut);
     }
 
-    if (con_counter == THREASHOLD){
+    if (con_counter >= THREASHOLD){
       printf ("consumer: The end.\n");
       pthread_cond_signal (fifo->notEmpty);
+      pthread_mutex_unlock (fifo->mut);
+      printf("Breaking\n");
       break;
     }
+    
+    printf("Debug\n");
     queueDel (fifo, &d);
     con_counter++;
     pthread_cond_signal (fifo->notFull);

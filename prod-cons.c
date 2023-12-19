@@ -143,6 +143,7 @@ void *producer (void *q)
     while (fifo->full) {
       printf ("producer: queue FULL.\n");
       pthread_cond_wait (fifo->notFull, fifo->mut);
+      printf ("producer: queue NOT FULL.\n");
     }
 	  workFunction wF;
 	  wF.work = whatIHaveToDo;
@@ -179,7 +180,6 @@ void *consumer (void *q)
       break;
     }
     
-    printf("Debug\n");
     queueDel (fifo, &d);
     con_counter++;
     pthread_cond_signal (fifo->notFull);

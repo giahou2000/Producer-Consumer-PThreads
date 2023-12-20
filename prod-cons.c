@@ -10,9 +10,9 @@
 #include <time.h>
 
 #define QUEUESIZE 10
-#define producers 4
-#define consumers 10
-#define LOOP 50000
+#define producers 10
+#define consumers 4
+#define LOOP 10000
 #define THREASHOLD producers * LOOP
 
 int con_counter = 0;
@@ -64,12 +64,8 @@ int main (){
 	// Creation of a FIFO(First in - First out) queue
 	queue *fifo;
 	
-	// Declare the number of producers(p) and consumers(q)
-	int p = producers;
-	int q = consumers;
-	
 	// Build the producers and consumers storage
-	pthread_t pro[p], con[q];
+	pthread_t pro[producers], con[consumers];
 	
 	// If you want to save the results to a file uncomment the followings
 	//FILE *fptr;
@@ -90,24 +86,24 @@ int main (){
 	* Here the producers and the consumers start to work
 	*/
 	// Create the producers' threads
-	for(int i = 0 ; i < p ; i++){
+	for(int i = 0 ; i < producers ; i++){
 		pthread_create (&pro[i], NULL, producer, (void*)fifo);
 	}
 	// Create the consumers' threads
-	for(int i = 0 ; i < q ; i++){
+	for(int i = 0 ; i < consumers ; i++){
 		pthread_create (&con[i], NULL, consumer, (void*)fifo);
 	}
 	
 	// Wait until all producers finish their work
-	for(int t = 0 ; t < p ; t++) {
+	for(int t = 0 ; t < producers ; t++) {
 		pthread_join(pro[t], NULL);
-    printf("One producer joined!!! \n");
+    printf("Producer %i joined!!! \n", t);
 	}
 	
 	// Wait until all consumers finish their work
-	for(int t = 0 ; t < q ; t++) {
+	for(int t = 0 ; t < consumers ; t++) {
 		pthread_join(con[t], NULL);
-    printf("One thread joined!!! \n");
+    printf("Consumer %i joined!!! \n", t);
 	}
 
   // Stop the stopwatch
@@ -143,8 +139,8 @@ void *producer (void *q)
     while (fifo->full) {
       printf ("producer: queue FULL.\n");
       pthread_cond_wait (fifo->notFull, fifo->mut);
-      printf ("producer: queue NOT FULL.\n");
     }
+
 	  workFunction wF;
 	  wF.work = whatIHaveToDo;
     queueAdd (fifo, wF);
@@ -161,20 +157,17 @@ void *producer (void *q)
 void *consumer (void *q)
 {
   queue *fifo;
-  int i;
   workFunction d;
   fifo = (queue *)q;
 
   while(con_counter < THREASHOLD){
     pthread_mutex_lock (fifo->mut);
 
-    while (fifo->empty) {
+    while (fifo->empty && con_counter < THREASHOLD) {
       pthread_cond_wait (fifo->notEmpty, fifo->mut);
     }
 
     if (con_counter >= THREASHOLD){
-      printf ("consumer: The end.\n");
-      pthread_cond_signal (fifo->notEmpty);
       pthread_mutex_unlock (fifo->mut);
       printf("Breaking\n");
       break;
@@ -182,11 +175,12 @@ void *consumer (void *q)
     
     queueDel (fifo, &d);
     con_counter++;
-    pthread_cond_signal (fifo->notFull);
     pthread_mutex_unlock (fifo->mut);
+    pthread_cond_signal (fifo->notFull);
     // printf ("consumer: received %d.\n", 1);
   }
   printf ("consumer: Exiting.\n");
+  pthread_cond_signal (fifo->notEmpty);
   return (NULL);
 }
 

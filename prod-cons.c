@@ -10,10 +10,10 @@
 #include <time.h>
 
 #define QUEUESIZE 10
-#define LOOP 50000
-#define THREASHOLD 50000
 #define producers 4
 #define consumers 10
+#define LOOP 50000
+#define THREASHOLD producers * LOOP
 
 int con_counter = 0;
 

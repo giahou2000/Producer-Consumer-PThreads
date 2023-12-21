@@ -1,0 +1,24 @@
+PC1:
+DELL Precision Tower 7810
+Intel(R) Xeon(R) CPU E5-2620 v4 @ 2.1GHz
+64Gb RAM @ 2133MHz
+GPU NVIDIA Quadro P400
+OS: Windows 10
+The program's time was 12.285174s
+
+PC2:
+DELL Precision Tower 5810
+Intel(R) Xeon(R) CPU E5-1620 v4 @ 3.5GHz
+32Gb RAM @ 2400MHz
+GPU NVIDIA Quadro K420
+OS: Ubuntu 20.04.6 LTS (Focal Fossa)
+The program's time was 2.246423s
+
+Laptop:
+DELL Precision 3561
+11th Gen Intel(R) Core(TM) i7-11850H @ 2.5GHz
+32Gb RAM @ 3200MHz
+GPU 0 Intel(R) UHD Graphics
+GPU 1 NVIDIA T600 Laptop GPU
+OS: Windows 11 - Windows Subsystem for Linux last version December 2023
+The program's time was 8.180352s
